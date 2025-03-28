@@ -1,0 +1,11 @@
+.venv/
+.git/
+__pycache__/
+*.pyc
+.DS_Store
+.idea/
+.vscode/
+*.db
+static/uploads/*
+deploy.sh
+deploy.conf

@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>管理后台</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            transition: all 0.3s ease;
+        }
+
+        .container:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.2);
+        }
+
+        .upload-section {
+            margin-bottom: 30px;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        input,
+        select,
+        button {
+            padding: 10px;
+            margin: 5px 0;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>版本管理</h1>
+        <div class="upload-section">
+            <h2>上传新版本</h2>
+            <form method="POST" action="/upload" enctype="multipart/form-data">
+                <select name="system_type" required>
+                    <option value="Windows">Windows</option>
+                    <option value="macOS">macOS</option>
+                    <option value="Linux">Linux</option>
+                </select>
+                <input type="text" name="version" placeholder="版本号 (例: v1.0.0)" required>
+                <input type="file" name="file" required>
+                <button type="submit">开始上传</button>
+            </form>
+        </div>
+        <div class="versions-section">
+            <h2>已上传版本</h2>
+            <div id="versions-list">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>版本号</th>
+                            <th>系统类型</th>
+                            <th>上传时间</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="versions-body"></tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+    <script>
+
+
+        // 加载版本列表
+        // 删除和修改版本
+        document.addEventListener('click', function (e) {
+            if (e.target.classList.contains('delete-btn')) {
+                if (confirm('确定要删除这个版本吗？')) {
+                    fetch(`/api/delete_version/${e.target.dataset.id}`, {
+                        method: 'DELETE'
+                    }).then(() => loadVersions())
+                }
+            } else if (e.target.classList.contains('edit-version-btn')) {
+                const newVersion = prompt('请输入新的版本号:', e.target.dataset.version);
+                if (newVersion) {
+                    fetch(`/api/update_version/${e.target.dataset.id}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ version: newVersion })
+                    }).then(response => response.json())
+                        .then(data => {
+                            if (data.status === 'success') {
+                                loadVersions();
+                            } else {
+                                alert(data.message || '更新失败');
+                            }
+                        })
+                }
+            }
+        });
+
+        function loadVersions() {
+            fetch('/api/versions')
+                .then(response => response.json())
+                .then(data => {
+                    const tbody = document.getElementById('versions-body');
+                    tbody.innerHTML = data.map(version =>
+                        `<tr>
+                            <td>${version.version}</td>
+                            <td>${version.system_type}</td>
+                            <td>${(version.file_size / 1024 / 1024).toFixed(2)} MB</td>
+                            <td><a href="/download/${version.file_path.split('/').pop()}">下载</a></td>
+                            <td>${new Date(version.upload_time).toLocaleString()}</td>
+                            <td>
+                                <button class="delete-btn" data-id="${version.id}">删除</button>
+                                <button class="edit-version-btn" data-id="${version.id}" data-version="${version.version}">修改版本号</button>
+                            </td>
+                        </tr>`
+                    ).join('');
+                });
+        }
+
+        // 初始化加载
+        window.addEventListener('load', loadVersions);
+    </script>
+</body>
+
+</html>
