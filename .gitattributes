@@ -1,2 +1,0 @@
-static/uploads/macOS_v1.0.0_editor-plus-1.0.0.dmg filter=lfs diff=lfs merge=lfs -text
-static/uploads/macOS_v1.0.1_editor-plus-1.0.01.dmg filter=lfs diff=lfs merge=lfs -text
